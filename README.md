@@ -1,0 +1,2 @@
+# OpenCVPreProcessing
+OpenCVPreProcessing before OCR
