@@ -42,7 +42,7 @@ RUN set -x \
 
 # Make 
 RUN set -x \
-    && make 
+    && make -j8
 
 # Make install
 RUN set -x \
