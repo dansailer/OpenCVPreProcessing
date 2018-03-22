@@ -53,10 +53,8 @@ FROM openjdk:8-jdk-alpine
 LABEL maintainer="Daniel Sailer <dsailer@gmail.com>"
 RUN set -x \
     && apk add --no-cache ca-certificates libjpeg libpng libwebp tiff openblas jasper protobuf \
-    && echo "export PATH=\"\$\{PATH\}/:/usr/local/share/OpenCV/java\"" >> /etc/profile \
-    && echo "export LD_LIBRARY_PATH=\"\$\{LD_LIBRARY_PATH\}/:/usr/local/share/OpenCV/java:/usr/local/lib:/usr/local/lib64\"" >> /etc/profile \
-    && echo "export PATH=\"\$\{PATH\}/:/usr/local/share/OpenCV/java\"" >> /root/.profile \
-    && echo "export LD_LIBRARY_PATH=\"\$\{LD_LIBRARY_PATH\}/:/usr/local/share/OpenCV/java:/usr/local/lib:/usr/local/lib64\"" >> /root/.profile
+    && echo "export PATH=\"\${PATH}/:/usr/local/share/OpenCV/java\"" >> /etc/profile \
+    && echo "export LD_LIBRARY_PATH=\"\${LD_LIBRARY_PATH}/:/usr/local/share/OpenCV/java:/usr/local/lib:/usr/local/lib64\"" >> /etc/profile
 COPY --from=builder /tmp/opencv/usr/ /usr/ 
 COPY bin/OpenCVPreProcessing.jar /
 COPY resources/* /
