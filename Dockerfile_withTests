@@ -27,7 +27,7 @@ ENV CXX /usr/bin/clang++
 
 # Run cmake with OpenCV build config
 RUN set -x \
-    && cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/tmp/opencv/usr/local -D BUILD_opencv_java=ON -D WITH_V4L=OFF -D BUILD_PERF_TESTS=OFF -D BUILD_TESTS=OFF ..
+    && cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/tmp/opencv/usr/local -D BUILD_opencv_java=ON -D WITH_V4L=OFF ..
 
 ## https://github.com/opencv/opencv/blob/master/CMakeLists.txt
 #    && cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/tmp/opencv/usr/local -D CMAKE_INSTALL_LIBDIR=lib -D BUILD_SHARED_LIBS=ON \
@@ -54,7 +54,9 @@ LABEL maintainer="Daniel Sailer <dsailer@gmail.com>"
 RUN set -x \
     && apk add --no-cache ca-certificates libjpeg libpng libwebp tiff openblas jasper protobuf \
     && echo "export PATH=\"\$\{PATH\}/:/usr/local/share/OpenCV/java\"" >> /etc/profile \
-    && echo "export LD_LIBRARY_PATH=\"\$\{LD_LIBRARY_PATH\}/:/usr/local/share/OpenCV/java:/usr/local/lib:/usr/local/lib64\"" >> /etc/profile
+    && echo "export LD_LIBRARY_PATH=\"\$\{LD_LIBRARY_PATH\}/:/usr/local/share/OpenCV/java:/usr/local/lib:/usr/local/lib64\"" >> /etc/profile \
+    && echo "export PATH=\"\$\{PATH\}/:/usr/local/share/OpenCV/java\"" >> /root/.profile \
+    && echo "export LD_LIBRARY_PATH=\"\$\{LD_LIBRARY_PATH\}/:/usr/local/share/OpenCV/java:/usr/local/lib:/usr/local/lib64\"" >> /root/.profile
 COPY --from=builder /tmp/opencv/usr/ /usr/ 
 COPY bin/OpenCVPreProcessing.jar /
 COPY resources/* /

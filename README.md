@@ -32,8 +32,11 @@ export JAVA_LIBRARY_PATH="/usr/local/Cellar/opencv/3.4.1_2/share/OpenCV/java"; j
 
 ## Alpine Docker Image
 The Dockerfile builds OpenCV in a separate builder container with all build dependencies. The build uses static libraries instead of shared ones. All depending libraries are therefore built and do not need to be installed separately.
+Building without tests (faster) ``docker build .``
+Building with tests ``docker build --file Dockerfile_withTests .``
 During the build the following 2 warnings are shown.
 ```
+[ 33%] Building CXX object modules/core/CMakeFiles/opencv_core.dir/src/hal_internal.cpp.o
 In file included from /tmp/opencv-3.4.1/modules/core/src/hal_internal.cpp:50:
 In file included from /tmp/opencv-3.4.1/build/opencv_lapack.h:2:
 In file included from /usr/include/cblas.h:5:
@@ -43,25 +46,16 @@ In file included from /usr/include/cblas.h:5:
 1 warning generated.
 ```
 ```
+[ 38%] Building CXX object modules/core/CMakeFiles/opencv_core.dir/src/parallel_impl.cpp.o
 /tmp/opencv-3.4.1/modules/core/src/parallel_impl.cpp:42:5: warning: "Can't detect sched_yield() on the target platform. Specify CV_YIELD() definition via compiler flags." [-W#warnings]
 #   warning "Can't detect sched_yield() on the target platform. Specify CV_YIELD() definition via compiler flags."
     ^
-1 warning generated.
-```
-```
-/tmp/opencv-3.4.1/modules/highgui/src/window_gtk.cpp:1612:27: warning: missing sentinel in function call [-Wsentinel]
-                      NULL);
-                          ^
-                          , NULL
-/usr/include/gtk-3.0/gtk/gtkfilechooserdialog.h:63:12: note: function has been explicitly marked sentinel here
-GtkWidget *gtk_file_chooser_dialog_new              (const gchar          *title,
-           ^
 1 warning generated.
 ```
 
 ## Run in Alpine container
 
 ```
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/share/OpenCV/java:/usr/local/lib64"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/share/OpenCV/java:/usr/local/lib:/usr/local/lib64"
 java -jar OpenCVPreProcessing.jar ocr02.jpg
 ```
