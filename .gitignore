@@ -1,6 +1,8 @@
 # Do not push test images to GitHub
 resources/*
 
+.DS_Store
+
 # Compiled class file
 *.class
 
