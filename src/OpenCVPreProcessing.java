@@ -1,9 +1,11 @@
 import java.io.File;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -28,9 +30,12 @@ public class OpenCVPreProcessing {
 			}
 			LOGGER.log(Level.INFO, "Processing image {0} ...", arg);
 			Mat source = Imgcodecs.imread(arg, Imgproc.COLOR_BGR2RGB);
-			Mat output = OcrPreProcessing.prepare(source);
-			Imgcodecs.imwrite(arg.replace(".", "_output."), output);
-			output.release();
+			ArrayList<Point> corners = OcrPreProcessing.detectPage(source);
+			Mat cropped = OcrPreProcessing.transform(source, corners);
+			Mat ocr = OcrPreProcessing.prepare(cropped, false, false);
+			Imgcodecs.imwrite(arg.replace(".", "_output."), ocr);
+			cropped.release();
+			ocr.release();
 			source.release();
 		}
 	}
