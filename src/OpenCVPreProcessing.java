@@ -19,7 +19,7 @@ public class OpenCVPreProcessing {
 		// - verify croped image has minimal size (1/4 of the original?)
 		// 5a8aa3540cf2a5b482619260.jpg, 5a8aa3560cf2a5b482619267.jpg
 		// 5a8c57080cf2a5b4826195b5.jpg
-		// - verify that the image is not pure white. 5a8aa4ac0cf2a5b4826192a8.jpg
+
 		// - don't change small images: 5a8eca890cf2a5b482619b68.jpg
 		// - verify minimal filesize for reading...
 		// - improve readability 5a8f457f0cf2a5b482619d72.jpg --> Disable Erode
