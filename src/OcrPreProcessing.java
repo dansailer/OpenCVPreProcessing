@@ -5,11 +5,14 @@ import java.util.logging.Logger;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.highgui.HighGui;
 import org.opencv.imgproc.Imgproc;
 
 /**
@@ -18,7 +21,7 @@ import org.opencv.imgproc.Imgproc;
  */
 public class OcrPreProcessing {
 
-	private static final Logger LOGGER = Logger.getLogger(OcrPreProcessing.class.getName());
+	public static final Logger LOGGER = Logger.getLogger(OcrPreProcessing.class.getName());
 	/**
 	 * Size used for edge detection
 	 */
@@ -31,6 +34,11 @@ public class OcrPreProcessing {
 	 * The size of the black border added incase of paper clipping
 	 */
 	private static final int BORDER_SIZE = 15;
+	/**
+	 * Fraction of the original picture that a cropped page should have minimum.
+	 * Safeguard against wrong crops.
+	 */
+	public static final double MIN_PAGE_FRACTION = 0.5;
 
 	/**
 	 * Pre processes the image to increase OCR results, by gray scaling and applying
@@ -52,8 +60,12 @@ public class OcrPreProcessing {
 			// Step: Gray Scale
 			LOGGER.log(Level.FINER, "GrayScale");
 			Mat gray = new Mat(source.rows(), source.cols(), CvType.CV_8U);
-			Imgproc.cvtColor(source, gray, Imgproc.COLOR_BGR2GRAY);
-			gray.copyTo(output);
+			if (source.channels() >= 3) {
+				Imgproc.cvtColor(source, gray, Imgproc.COLOR_BGR2GRAY);
+				gray.copyTo(output);
+			} else {
+				output.copyTo(gray);
+			}
 
 			// Step: Equalize Histogram after gray scaling
 			if (equalizeHist) {
@@ -77,11 +89,13 @@ public class OcrPreProcessing {
 			Imgproc.adaptiveThreshold(output, output, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY,
 					13, 4);
 
-			// Step: Erode to make the lines bigger
-			LOGGER.log(Level.FINER, "Erode to make the threshold lines bigger");
-			Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
-			Imgproc.erode(output, output, element);
-			element.release();
+			// Step: Erode to make the lines bigger.
+			// Reduces readability of thin text --> disable
+			// LOGGER.log(Level.FINER, "Erode to make the threshold lines bigger");
+			// Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3,
+			// 3));
+			// Imgproc.erode(output, output, element);
+			// element.release();
 
 			// Step: Blend both images together
 			if (blend) {
@@ -90,81 +104,12 @@ public class OcrPreProcessing {
 				gray.release();
 			}
 		} catch (Exception exc) {
-			LOGGER.log(Level.SEVERE, "Preparing image for OCR failed with '{0}'", exc.getMessage());
+			LOGGER.log(Level.SEVERE, "Preparing image for OCR failed with \"{0}\"", exc.getMessage());
 			source.copyTo(output);
 		}
 
 		return output;
 	}
-
-	/*
-	 * public static Mat crop(Mat source) { try { LOGGER.log(Level.INFO,
-	 * "Cropping image"); Mat working = new Mat(source.rows(), source.cols(),
-	 * source.type()); source.copyTo(working);
-	 * 
-	 * // Step: Gray Scale LOGGER.log(Level.FINE, "GrayScale");
-	 * Imgproc.cvtColor(source, working, Imgproc.COLOR_BGR2GRAY);
-	 * 
-	 * // Step: BilateralFilter blurring for better keeping edges than GaussianBlur
-	 * LOGGER.log(Level.FINE, "BilateralFilter Blur"); Mat filterSource = new
-	 * Mat(working.rows(), working.cols(), CvType.CV_8U);
-	 * working.copyTo(filterSource); Imgproc.bilateralFilter(filterSource, working,
-	 * 7, 75, 75); filterSource.release();
-	 * 
-	 * // Step: Get ratio and size for better edge detection LOGGER.log(Level.FINE,
-	 * "Resizing..."); double ratio = Math.min(EDGESIZE.width / source.width(),
-	 * EDGESIZE.height / source.height()); Size newSize = new Size(source.width() *
-	 * ratio, source.height() * ratio); Imgproc.resize(working, working, newSize);
-	 * 
-	 * // Step: Add black border in case page is clipped
-	 * Core.copyMakeBorder(working, working, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE,
-	 * BORDER_SIZE, Core.BORDER_CONSTANT, new Scalar(0, 0, 0));
-	 * 
-	 * // Step: GaussianBlur LOGGER.log(Level.FINE, "GaussianBlur");
-	 * Imgproc.GaussianBlur(working, working, new Size(5, 5), 0.0);
-	 * 
-	 * // Step: Canny LOGGER.log(Level.FINE, "Canny"); Mat edges = new
-	 * Mat(working.rows(), working.cols(), working.type()); // [TODO] Calculate auto
-	 * thresholds //
-	 * https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-
-	 * detection-with-python-and-opencv/ Imgproc.Canny(working, edges, 75, 200, 3,
-	 * true);
-	 * 
-	 * // Step: Find contours, sorte and take the largest couple
-	 * LOGGER.log(Level.FINE, "Find contours, sorte and take the largest couple");
-	 * ArrayList<MatOfPoint> contours = new ArrayList<MatOfPoint>(); Mat hierarchy =
-	 * new Mat(); Imgproc.findContours(edges, contours, hierarchy,
-	 * Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE); hierarchy.release(); int
-	 * largeNumber = Math.min(contours.size(), NUMBER_OF_LARGE_CONTOURS);
-	 * LOGGER.log(Level.FINER, "Number of contours: {0}", contours.size());
-	 * contours.sort(new ContourComparator()); List<MatOfPoint> largeContours =
-	 * contours.subList(0, largeNumber);
-	 * 
-	 * // Step: Loop over and find 4 cornered approximated convex contour
-	 * LOGGER.log(Level.FINE, "Loop over and find 4 cornered convex contour");
-	 * MatOfPoint2f pageContour = new MatOfPoint2f(); for (MatOfPoint cnt :
-	 * largeContours) { // approximate the contour MatOfPoint2f c2f = new
-	 * MatOfPoint2f(cnt.toArray()); double epsilon = Imgproc.arcLength(c2f, true);
-	 * MatOfPoint2f approx2f = new MatOfPoint2f(); MatOfPoint approx = new
-	 * MatOfPoint(); Imgproc.approxPolyDP(c2f, approx2f, 0.02 * epsilon, true);
-	 * approx2f.convertTo(approx, CvType.CV_32S); boolean convex =
-	 * Imgproc.isContourConvex(approx); LOGGER.log(Level.FINER,
-	 * "Approximated contour - Total: {0} ElemSize: {1} Convex: {2} Continious: {3}"
-	 * , new Object[] { approx2f.total(), approx2f.elemSize(), convex,
-	 * approx2f.isContinuous() }); // approximated contour has four points and is
-	 * convex --> page found if (approx2f.total() == 4 && convex) { pageContour =
-	 * approx2f; break; } }
-	 * 
-	 * // Step: If page found de warp and crop if (!pageContour.empty()) { Point[]
-	 * corners = pageContour.toArray(); ArrayList<Point> scaledCorners = new
-	 * ArrayList<Point>(); MatOfPoint contour = new MatOfPoint(); for (Point p :
-	 * corners) { scaledCorners.add(new Point(Math.round((p.x - BORDER_SIZE) /
-	 * ratio), Math.round((p.y - BORDER_SIZE) / ratio))); }
-	 * contour.fromList(scaledCorners); working = transform(source, scaledCorners);
-	 * return working; } } catch (Exception exc) {
-	 * 
-	 * } return source; }
-	 */
 
 	/**
 	 * Trying to detect a paper page in the given image. Key is to use blurring and
@@ -176,10 +121,15 @@ public class OcrPreProcessing {
 	 * https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
 	 * 
 	 * @param source
-	 *            The image to detect the page in
+	 *            The image to detect the page in.
+	 * @param minimalPageSizeOfOriginal
+	 *            The fraction of the original image size that the found page size
+	 *            should minimally have. This is a safeguard against wrong cropping
+	 *            when the actual page size couldn't be found and then only a small
+	 *            box of text in the original page is found.
 	 * @return The four corners of the page
 	 */
-	public static ArrayList<Point> detectPage(Mat source) {
+	public static ArrayList<Point> detectPage(Mat source, double minimalPageSizeOfOriginal) {
 		LOGGER.log(Level.FINE, "Detect paper page borders");
 		ArrayList<Point> scaledCorners = new ArrayList<Point>();
 		MatOfPoint2f pageContour = new MatOfPoint2f();
@@ -191,7 +141,9 @@ public class OcrPreProcessing {
 
 			// Step: Gray Scale
 			LOGGER.log(Level.FINER, "GrayScale");
-			Imgproc.cvtColor(source, working, Imgproc.COLOR_BGR2GRAY);
+			if (source.channels() >= 3) {
+				Imgproc.cvtColor(source, working, Imgproc.COLOR_BGR2GRAY);
+			}
 
 			// Step: BilateralFilter blurring for better keeping edges than GaussianBlur
 			LOGGER.log(Level.FINER, "BilateralFilter Blur");
@@ -220,7 +172,18 @@ public class OcrPreProcessing {
 			Mat edges = new Mat(working.rows(), working.cols(), working.type());
 			// [TODO] Calculate auto thresholds
 			// https://www.pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
+			// double median = median(working);
+			// int lower = (int)Math.max(0, (1.0 - 0.33)*median);
+			// int upper = (int)Math.max(255, (1.0 + 0.33)*median);
+
+			// LOGGER.log(Level.INFO, "Median: {0}", median);
+			// LOGGER.log(Level.INFO, "Starting canny edge with lower {0} and upper {1}",
+			// new Object[] {lower, upper});
+			// Imgproc.Canny(working, edges, lower, upper, 3, true);
+			// HighGui.imshow("Auto", edges);
 			Imgproc.Canny(working, edges, 75, 200, 3, true);
+			// HighGui.imshow("Fix", edges);
+			// HighGui.waitKey();
 
 			// Step: Find contours, sort and take the largest couple
 			LOGGER.log(Level.FINER, "Find contours, sort and take the largest couple");
@@ -236,6 +199,7 @@ public class OcrPreProcessing {
 			// Step: Loop over and find 4 cornered approximated convex contour searching
 			// from large to smaller
 			LOGGER.log(Level.FINER, "Loop over and find 4 cornered convex contour searching from large to smaller");
+			double imageSize = working.rows() * working.cols();
 			for (MatOfPoint cnt : largeContours) {
 				// approximate the contour
 				MatOfPoint2f c2f = new MatOfPoint2f(cnt.toArray());
@@ -245,8 +209,15 @@ public class OcrPreProcessing {
 				Imgproc.approxPolyDP(c2f, approx2f, 0.02 * epsilon, true);
 				approx2f.convertTo(approx, CvType.CV_32S);
 				boolean convex = Imgproc.isContourConvex(approx);
-				LOGGER.log(Level.FINER, "Approximated contour - Total: {0} Convex: {1} Continious: {2}",
-						new Object[] { approx2f.total(), convex, approx2f.isContinuous() });
+				double area = Imgproc.contourArea(approx2f);
+				LOGGER.log(Level.FINER, "Approximated contour - Total: {0} Convex: {1} Continuous: {2} Areasize: {3}",
+						new Object[] { approx2f.total(), convex, approx2f.isContinuous(), area });
+				// contour is too small --> exit, since the contours are sorted by area size.
+				if (imageSize * minimalPageSizeOfOriginal > area) {
+					LOGGER.log(Level.INFO, "Found page size is too small compared to the original image size {0}/{1}.",
+							new Object[] { area, imageSize });
+					break;
+				}
 				// approximated contour has four points and is convex --> page found
 				if (approx2f.total() == 4 && convex) {
 					pageContour = approx2f;
@@ -254,7 +225,7 @@ public class OcrPreProcessing {
 				}
 			}
 		} catch (Exception exc) {
-			LOGGER.log(Level.SEVERE, "Finding page failed with '{0}'", exc.getMessage());
+			LOGGER.log(Level.SEVERE, "Finding page failed with \"{0}\"", exc.getMessage());
 		}
 
 		// Step: If page found, scale and calculate corners
@@ -336,7 +307,7 @@ public class OcrPreProcessing {
 			Imgproc.warpPerspective(result, result, M, new Size(width, height));
 			M.release();
 		} catch (Exception exc) {
-			LOGGER.log(Level.SEVERE, "Transformation failed with '{0}'", exc.getMessage());
+			LOGGER.log(Level.SEVERE, "Transformation failed with \"{0}\"", exc.getMessage());
 		}
 
 		return result;
@@ -370,4 +341,62 @@ public class OcrPreProcessing {
 		result[3] = points.get(3);
 		return result;
 	}
+
+	// https://github.com/arnaudgelas/OpenCVExamples/blob/master/cvMat/Statistics/Median/Median.cpp
+
+	public static double median(Mat image) {
+		double m = (image.rows() * image.cols()) / 2;
+		double median = -1;
+		int sizeOfHist = 256;
+		MatOfInt histSize = new MatOfInt(sizeOfHist);
+		MatOfFloat range = new MatOfFloat(0.0f, 256.0f);
+		MatOfInt channels = new MatOfInt(0);
+		Boolean accumulate = false;
+		Mat hist = new Mat();
+
+		ArrayList<Mat> images = new ArrayList<Mat>();
+		images.add(image);
+		Imgproc.calcHist(images, channels, new Mat(), hist, histSize, range, accumulate);
+
+		long bin = 0;
+		for (int i = 0; i < 256 && median < 0; i++) {
+			bin = bin + Math.round(hist.get(i, 0)[0]);
+			if (bin > m && median < 0)
+				median = i;
+		}
+
+		return median;
+
+	}
+
+	// http://cartucho.github.io/tutorial_histogram_calculation.html
+	public static Mat calculateHistogram(Mat image) {
+		List<Mat> gray_planes = new ArrayList<Mat>();
+		gray_planes.add(image);
+
+		int sizeOfHist = 256;
+		MatOfInt histSize = new MatOfInt(sizeOfHist);
+		MatOfFloat range = new MatOfFloat(0.0f, 256.0f);
+		MatOfInt channels = new MatOfInt(0);
+		Boolean accumulate = false;
+		Mat hist_gray = new Mat();
+
+		Imgproc.calcHist(gray_planes, channels, new Mat(), hist_gray, histSize, range, accumulate);
+
+		// Draw the histogram
+		int hist_w = 512;
+		int hist_h = 400;
+		int bin_w = (int) Math.round((double) hist_w / histSize.get(0, 0)[0]);
+		Mat histImage = new Mat(hist_h, hist_w, CvType.CV_8UC3, new Scalar(0, 0, 0));
+
+		Core.normalize(hist_gray, hist_gray, 0, histImage.rows(), Core.NORM_MINMAX, -1, new Mat());
+		for (int i = 1; i < sizeOfHist; i++) {
+			Imgproc.line(histImage, new Point(bin_w * (i - 1), hist_h - Math.round(hist_gray.get(i - 1, 0)[0])),
+					new Point(bin_w * (i), hist_h - Math.round(hist_gray.get(i, 0)[0])), new Scalar(255, 255, 255), 2,
+					8, 0);
+		}
+
+		return histImage;
+	}
+
 }
