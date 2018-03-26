@@ -7,13 +7,14 @@
     <property name="dir.workspace" value="/Users/dansailer/Code/eclipse"/>
     <property name="dir.jarfile" value="${dir.buildfile}/bin"/>
     <target name="create_run_jar">
+    	<delete file="${dir.jarfile}/OpenCVPreProcessing.jar"/>
         <jar destfile="${dir.jarfile}/OpenCVPreProcessing.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="OpenCVPreProcessing"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/local/Cellar/opencv/3.4.1_2/share/OpenCV/java/opencv-341.jar"/>
-            <fileset dir="${dir.jarfile}"/>
+        	<zipfileset excludes="META-INF/*.SF" src="/usr/local/Cellar/opencv/3.4.1_2/share/OpenCV/java/opencv-341.jar"/>
+        	<fileset dir="${dir.jarfile}"/>
         </jar>
     </target>
 </project>
