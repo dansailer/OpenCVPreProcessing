@@ -61,20 +61,7 @@ public class OpenCVPreProcessing {
 			double blurSrc = OcrPreProcessing.varianceOfLaplacian(source);
 			double modifiedSrc = OcrPreProcessing.modifiedLaplacian(source);
 			if( blurSrc < 70 && modifiedSrc < 4) {
-				LOGGER.log(Level.SEVERE, "\n {0} \nSource: varianceOfLaplacian: {1}, modifiedLaplacian: {2}", new Object[] {arg, blurSrc, modifiedSrc});
-//				
-//				LOGGER.log(Level.SEVERE, "varianceOfLaplacian: {0}", OcrPreProcessing.varianceOfLaplacian(source));
-//				LOGGER.log(Level.SEVERE, "tenengrad: {0}", OcrPreProcessing.tenengrad(source,1));
-//				LOGGER.log(Level.SEVERE, "normalizedGraylevelVariance: {0}", OcrPreProcessing.normalizedGraylevelVariance(source));
-//				
-//				LOGGER.log(Level.SEVERE, "Image is too blurry (varianceOfLaplacian: {0})", blur);
-//				double ratio = Math.min(OcrPreProcessing.EDGESIZE.width / source.width(), OcrPreProcessing.EDGESIZE.height / source.height());
-//				Size newSize = new Size(source.width() * ratio, source.height() * ratio);
-//				Imgproc.resize(ocr, ocr, newSize);
-//				HighGui.imshow("Blur", ocr);
-//				HighGui.resizeWindow("Blur", (int)OcrPreProcessing.EDGESIZE.width, (int)OcrPreProcessing.EDGESIZE.height);
-//				HighGui.waitKey();
-//				HighGui.destroyWindow("Blur");
+				LOGGER.log(Level.SEVERE, "\n BLUR - Source: varianceOfLaplacian: {1}, modifiedLaplacian: {2}, file: {0}", new Object[] {arg, blurSrc, modifiedSrc});
 			}
 			if (!DEBUG) {
 				Imgcodecs.imwrite(arg.replace(".jpg", ".png"), ocr);
