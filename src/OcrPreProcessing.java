@@ -54,6 +54,23 @@ public class OcrPreProcessing {
 	 */
 	public static boolean DEBUG = Boolean.parseBoolean(System.getProperty("DEBUG", "false"));
 
+	
+	/**
+	 * Returns true if the image is probably blurry when variance of laplacian
+	 * and modified laplacian are above the threshold.
+	 * @param source image to calculate blurriness
+	 * @return is blurry or not
+	 */
+	public static boolean isBlurry(Mat source) {
+		double blurSrc = varianceOfLaplacian(source);
+		double modifiedSrc = modifiedLaplacian(source);
+		if( blurSrc < MIN_VARIANCE_OF_LAPLACIAN && modifiedSrc < MIN_MODIFIED_LAPLACIAN) {
+			LOGGER.log(Level.INFO, "\n BLURRY - varianceOfLaplacian: {0}, modifiedLaplacian: {1}", new Object[] {blurSrc, modifiedSrc});
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * Pre processes the image to increase OCR results, by gray scaling and applying
 	 * thresholds.
