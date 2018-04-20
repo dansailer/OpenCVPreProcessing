@@ -42,7 +42,8 @@ public class OcrPreProcessing {
 	 */
 	public static final double MIN_PAGE_FRACTION = 0.5;
 	/**
-	 * The minimal threshold of variance of laplacian before considering a image sharp.
+	 * The minimal threshold of variance of laplacian before considering a image
+	 * sharp.
 	 */
 	public static final double MIN_VARIANCE_OF_LAPLACIAN = 70;
 	/**
@@ -54,23 +55,24 @@ public class OcrPreProcessing {
 	 */
 	public static boolean DEBUG = Boolean.parseBoolean(System.getProperty("DEBUG", "false"));
 
-	
 	/**
-	 * Returns true if the image is probably blurry when variance of laplacian
-	 * and modified laplacian are above the threshold.
-	 * @param source image to calculate blurriness
+	 * Returns true if the image is probably blurry when variance of laplacian and
+	 * modified laplacian are above the threshold.
+	 * 
+	 * @param source
+	 *            image to calculate blurriness
 	 * @return is blurry or not
 	 */
 	public static boolean isBlurry(Mat source) {
 		double blurSrc = varianceOfLaplacian(source);
 		double modifiedSrc = modifiedLaplacian(source);
-		if( blurSrc < MIN_VARIANCE_OF_LAPLACIAN && modifiedSrc < MIN_MODIFIED_LAPLACIAN) {
-			LOGGER.log(Level.INFO, "\n BLURRY - varianceOfLaplacian: {0}, modifiedLaplacian: {1}", new Object[] {blurSrc, modifiedSrc});
+		if (blurSrc < MIN_VARIANCE_OF_LAPLACIAN && modifiedSrc < MIN_MODIFIED_LAPLACIAN) {
+			LOGGER.log(Level.INFO, "\n BLURRY - varianceOfLaplacian: {0}, modifiedLaplacian: {1}", new Object[] { blurSrc, modifiedSrc });
 			return true;
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Pre processes the image to increase OCR results, by gray scaling and applying
 	 * thresholds.
@@ -240,11 +242,11 @@ public class OcrPreProcessing {
 				double blurVar = varianceOfLaplacian(source);
 				double blurMod = modifiedLaplacian(source);
 				String blur = "";
-				if(blurVar < MIN_VARIANCE_OF_LAPLACIAN && blurMod < MIN_MODIFIED_LAPLACIAN) {
+				if (blurVar < MIN_VARIANCE_OF_LAPLACIAN && blurMod < MIN_MODIFIED_LAPLACIAN) {
 					blur = String.format("BLURRED (%1$.3f?/%2$.3f)", blurVar, blurMod);
 				}
-				Imgproc.putText(working, "Normal area: " + blur, new Point(3 * BORDER_SIZE, 3 * BORDER_SIZE),
-						Core.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 255), 2);
+				Imgproc.putText(working, "Normal area: " + blur, new Point(3 * BORDER_SIZE, 3 * BORDER_SIZE), Core.FONT_HERSHEY_PLAIN, 1,
+						new Scalar(255, 255, 255), 2);
 				for (int i = 0; i < largeNumber; i++) {
 					double area = Imgproc.contourArea(largeContours.get(i));
 					Imgproc.putText(working, Double.toString(area), new Point(530, working.height() - (i + 3) * 2 * BORDER_SIZE),
@@ -471,11 +473,11 @@ public class OcrPreProcessing {
 				double blurVar = varianceOfLaplacian(source);
 				double blurMod = modifiedLaplacian(source);
 				String blur = "";
-				if(blurVar < MIN_VARIANCE_OF_LAPLACIAN && blurMod < MIN_MODIFIED_LAPLACIAN) {
+				if (blurVar < MIN_VARIANCE_OF_LAPLACIAN && blurMod < MIN_MODIFIED_LAPLACIAN) {
 					blur = String.format("BLURRED (%1$.3f?/%2$.3f)", blurVar, blurMod);
 				}
-				Imgproc.putText(working, "Min Rect " + blur, new Point(3 * BORDER_SIZE, 3 * BORDER_SIZE),
-						Core.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 255), 2);
+				Imgproc.putText(working, "Min Rect " + blur, new Point(3 * BORDER_SIZE, 3 * BORDER_SIZE), Core.FONT_HERSHEY_PLAIN, 1,
+						new Scalar(255, 255, 255), 2);
 				for (int i = 0; i < largeNumber; i++) {
 					double area = ContourComparatorMinRect.calculateMinRectArea(largeContours.get(i));
 					Imgproc.putText(working, Double.toString(area), new Point(530, working.height() - (i + 3) * 2 * BORDER_SIZE),
@@ -703,11 +705,11 @@ public class OcrPreProcessing {
 				double blurVar = varianceOfLaplacian(source);
 				double blurMod = modifiedLaplacian(source);
 				String blur = "";
-				if(blurVar < MIN_VARIANCE_OF_LAPLACIAN && blurMod < MIN_MODIFIED_LAPLACIAN) {
+				if (blurVar < MIN_VARIANCE_OF_LAPLACIAN && blurMod < MIN_MODIFIED_LAPLACIAN) {
 					blur = String.format("BLURRED (%1$.3f?/%2$.3f)", blurVar, blurMod);
 				}
-				Imgproc.putText(working, "Convex Hull " + blur, new Point(3 * BORDER_SIZE, 3 * BORDER_SIZE),
-						Core.FONT_HERSHEY_PLAIN, 1, new Scalar(255, 255, 255), 2);
+				Imgproc.putText(working, "Convex Hull " + blur, new Point(3 * BORDER_SIZE, 3 * BORDER_SIZE), Core.FONT_HERSHEY_PLAIN, 1,
+						new Scalar(255, 255, 255), 2);
 				for (int i = 0; i < largeNumber; i++) {
 					double area = Imgproc.contourArea(largeContours.get(i));
 					Imgproc.putText(working, Double.toString(area), new Point(530, working.height() - (i + 3) * 2 * BORDER_SIZE),
@@ -938,7 +940,162 @@ public class OcrPreProcessing {
 	}
 
 	/**
+	 * Simplest Color Balance. Performs color balancing via histogram normalization.
+	 *
+	 * @param img
+	 *            input color or gray scale image
+	 * @param percent
+	 *            controls the percentage of pixels to clip to white and black.
+	 *            (normally, choose 1~10)
+	 * @return Balanced image in CvType.CV_32F
+	 */
+	public static Mat SimplestColorBalance(Mat img, int percent) {
+		if (percent <= 0)
+			percent = 5;
+		img.convertTo(img, CvType.CV_8U);
+		Mat debugImg = new Mat();
+		double ratio = Math.min(EDGESIZE.width / img.width(), EDGESIZE.height / img.height());
+		Size newSize = new Size(img.width() * ratio, img.height() * ratio);
+		Imgproc.resize(img, debugImg, newSize);
+		if (DEBUG) {
+			HighGui.namedWindow("Source", HighGui.WINDOW_AUTOSIZE);
+			HighGui.imshow("Source", debugImg);
+		}
+		List<Mat> channels = new ArrayList<>();
+		int rows = img.rows(); // number of rows of image
+		int cols = img.cols(); // number of columns of image
+		int chnls = img.channels(); // number of channels of image
+		double halfPercent = percent / 200.0;
+		if (chnls == 3)
+			Core.split(img, channels);
+		else
+			channels.add(img);
+		List<Mat> results = new ArrayList<>();
+		for (int i = 0; i < chnls; i++) {
+			// find the low and high precentile values (based on the input percentile)
+			Mat flat = new Mat();
+			channels.get(i).reshape(1, 1).copyTo(flat);
+			Core.sort(flat, flat, Core.SORT_ASCENDING);
+			double lowVal = flat.get(0, (int) Math.floor(flat.cols() * halfPercent))[0];
+			double topVal = flat.get(0, (int) Math.ceil(flat.cols() * (1.0 - halfPercent)))[0];
+			// saturate below the low percentile and above the high percentile
+			Mat channel = channels.get(i);
+			for (int m = 0; m < rows; m++) {
+				for (int n = 0; n < cols; n++) {
+					if (channel.get(m, n)[0] < lowVal)
+						channel.put(m, n, lowVal);
+					if (channel.get(m, n)[0] > topVal)
+						channel.put(m, n, topVal);
+				}
+			}
+			Core.normalize(channel, channel, 0.0, 255.0 / 2, Core.NORM_MINMAX);
+			channel.convertTo(channel, CvType.CV_32F);
+			results.add(channel);
+		}
+		Mat outval = new Mat(img.rows(), img.cols(), img.type());
+		Core.merge(results, outval);
+		
+		Mat debugResultImg = new Mat();
+		LOGGER.log(Level.INFO, "Type: {0}", outval.type());
+		Imgproc.resize(outval, debugResultImg, newSize);
+		debugResultImg.convertTo(debugResultImg, CvType.CV_8U);
+		LOGGER.log(Level.INFO, "Type: {0}", debugResultImg.type());
+		if (DEBUG) {
+			HighGui.namedWindow("Simplest", HighGui.WINDOW_AUTOSIZE);
+			HighGui.imshow("Simplest", debugResultImg);
+			HighGui.waitKey();
+		}
+		return outval;
+	}
+
+	/**
+	 * This is the color balancing technique used in Adobe Photoshop's "auto levels"
+	 * command. The idea is that in a well balanced photo, the brightest color
+	 * should be white and the darkest black. Thus, we can remove the color cast
+	 * from an image by scaling the histograms of each of the R, G, and B channels
+	 * so that they span the complete 0-255 scale. In contrast to the other color
+	 * balancing algorithms, this method does not separate the estimation and
+	 * adaptation steps. In order to deal with outliers, Simplest Color Balance
+	 * saturates a certain percentage of the image's bright pixels to white and dark
+	 * pixels to black. The saturation level is an adjustable parameter that affects
+	 * the quality of the output. Values around 0.01 are typical.
+	 * 
+	 * http://www.morethantechnical.com/2015/01/14/simplest-color-balance-with-opencv-wcode/
+	 * http://web.stanford.edu/~sujason/ColorBalancing/simplestcb.html
+	 * 
+	 * @param src
+	 *            input color or gray scale image
+	 * @param percent
+	 *            controls the percentage of pixels to clip to white and black.
+	 *            Values around 0.01 are typical.
+	 * @return Balanced image in CvType.CV_32F
+	 */
+	public static Mat SimplestColorBalancing(Mat src, double percent) {
+		src.convertTo(src, CvType.CV_8U);
+		Mat debugImg = new Mat();
+		double ratio = Math.min(EDGESIZE.width / src.width(), EDGESIZE.height / src.height());
+		Size newSize = new Size(src.width() * ratio, src.height() * ratio);
+		Imgproc.resize(src, debugImg, newSize);
+		if (DEBUG) {
+			HighGui.namedWindow("Source", HighGui.WINDOW_AUTOSIZE);
+			HighGui.imshow("Source", debugImg);
+		}
+		
+		if (!(percent > 0 && percent < 100)) {
+			percent = 0.01f;
+		}
+		double halfPercent = percent / 200.0f;
+		List<Mat> channels = new ArrayList<Mat>();
+		if (src.channels() == 3)
+			Core.split(src, channels);
+		else
+			channels.add(src);
+		for (Mat channel : channels) {
+			// find the low and high percentile values (based on the input percentile)
+			Mat flat = new Mat();
+			channel.reshape(1, 1).copyTo(flat);
+			Core.sort(flat, flat, Core.SORT_EVERY_ROW + Core.SORT_ASCENDING);
+			double lowVal = flat.get(0, (int) Math.floor(flat.cols() * halfPercent))[0];
+			double topVal = flat.get(0, (int) Math.ceil(flat.cols() * (1.0 - halfPercent)))[0];
+
+			// saturate below the low percentile and above the high percentile
+			for (int x = 0; x < src.rows(); x++) {
+				for (int y = 0; y < src.cols(); y++) {
+					if (channel.get(x, y)[0] < lowVal)
+						channel.put(x, y, lowVal);
+					if (channel.get(x, y)[0] > topVal)
+						channel.put(x, y, topVal);
+				}
+			}
+			channel.setTo(Scalar.all(lowVal));
+			//tmpsplit[i].setTo(lowval,tmpsplit[i] < lowval);
+	        //tmpsplit[i].setTo(highval,tmpsplit[i] > highval);
+
+			// scale the channel
+			Core.normalize(channel, channel, 0.0, 255.0, Core.NORM_MINMAX);
+			channel.convertTo(channel, CvType.CV_32F);
+			flat.release();
+		}
+		Mat result = new Mat();
+		Core.merge(channels, result);
+		
+		Mat debugResultImg = new Mat();
+		LOGGER.log(Level.INFO, "Type: {0}", result.type());
+		Imgproc.resize(result, debugResultImg, newSize);
+		debugResultImg.convertTo(debugResultImg, CvType.CV_8U);
+		LOGGER.log(Level.INFO, "Type: {0}", debugResultImg.type());
+		if (DEBUG) {
+			HighGui.namedWindow("Simplest", HighGui.WINDOW_AUTOSIZE);
+			HighGui.imshow("Simplest", debugResultImg);
+			HighGui.waitKey();
+		}
+		
+		return result;
+	}
+
+	/**
 	 * OpenCV port of 'LAPM' algorithm (Nayar89) https://stackoverflow.com/a/7768918
+	 * http://radjkarl.github.io/imgProcessor/_modules/imgProcessor/measure/sharpness/parameters.html
 	 * 
 	 * @param src
 	 *            The source image
@@ -1017,17 +1174,24 @@ public class OcrPreProcessing {
 	 * @return tenengrad
 	 */
 	public static double tenengrad(Mat src, int ksize) {
+		Mat gray = new Mat();
+		if (src.channels() >= 3) {
+			Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
+		} else {
+			src.copyTo(gray);
+		}
 		double focusMeasure = 0;
 		Mat Gx = new Mat();
 		Mat Gy = new Mat();
-		Imgproc.Sobel(src, Gx, CvType.CV_64F, 1, 0, ksize, 1.0, 0.0);
-		Imgproc.Sobel(src, Gy, CvType.CV_64F, 0, 1, ksize, 1.0, 0.0);
+		Imgproc.Sobel(gray, Gx, CvType.CV_64F, 1, 0, ksize, 1.0, 0.0);
+		Imgproc.Sobel(gray, Gy, CvType.CV_64F, 0, 1, ksize, 1.0, 0.0);
 		Mat FM = new Mat();
 		Core.add(Gx.mul(Gx), Gy.mul(Gy), FM);
 		focusMeasure = Core.mean(FM).val[0];
 		Gx.release();
 		Gy.release();
 		FM.release();
+		gray.release();
 		return focusMeasure;
 	}
 
@@ -1040,14 +1204,82 @@ public class OcrPreProcessing {
 	 * @return normalizedGraylevelVariance
 	 */
 	public static double normalizedGraylevelVariance(Mat src) {
+		Mat gray = new Mat();
+		if (src.channels() >= 3) {
+			Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
+		} else {
+			src.copyTo(gray);
+		}
 		double focusMeasure = 0;
 		MatOfDouble mean = new MatOfDouble();
 		MatOfDouble std = new MatOfDouble();
-		Core.meanStdDev(src, mean, std);
+		Core.meanStdDev(gray, mean, std);
 		focusMeasure = (std.get(0, 0)[0] * std.get(0, 0)[0]) / mean.get(0, 0)[0];
 		mean.release();
 		std.release();
+		gray.release();
 		return focusMeasure;
+	}
+
+	/**
+	 * Find average brightness across image. Is this root - mean - square or not?
+	 * https://www.zohodiscussions.com/processing/topic/calculate-image-contrast-using-root-mean-square-rms
+	 * https://github.com/jeffThompson/ProcessingTeachingSketches/blob/master/ImageProcessingAndOpenCV/MeasureImageBrightnessAndContrast/MeasureImageBrightnessAndContrast.pde
+	 * 
+	 * @param src
+	 * @return
+	 */
+	public static double brightness(Mat src, boolean normalize) {
+		double brigthness = 0;
+		if (src.channels() >= 3) {
+			double[] rgb = new double[3];
+			for (int x = 0; x < src.rows(); x++) {
+				for (int y = 0; y < src.cols(); y++) {
+					src.get(x, y, rgb);
+					brigthness += (0.2126 * rgb[0]) + (0.7152 * rgb[1]) + (0.0722 * rgb[2]); // scales RGB to perceived brightness
+					if (normalize) {
+						brigthness = brigthness / 255.0; // normalize to 0-1
+					}
+				}
+			}
+			brigthness = brigthness / (src.rows() * src.cols());
+
+		} else {
+
+		}
+		LOGGER.log(Level.INFO, "Brightness: {0}", brigthness);
+		return brigthness;
+	}
+
+	/**
+	 * find contrast by comparing average brightness with current value
+	 * 
+	 * @param src
+	 * @param brightness
+	 * @param normalize
+	 * @return
+	 */
+	public static double contrast(Mat src, double brightness, boolean normalize) {
+		double contrast = 0;
+		double pxIntensity = 0;
+		if (src.channels() >= 3) {
+			double[] rgb = new double[3];
+			for (int x = 0; x < src.rows(); x++) {
+				for (int y = 0; y < src.cols(); y++) {
+					src.get(x, y, rgb);
+					pxIntensity = (0.2126 * rgb[0]) + (0.7152 * rgb[1]) + (0.0722 * rgb[2]);
+					if (normalize) {
+						pxIntensity = pxIntensity / 255.0; // normalize to 0-1
+					}
+					contrast += Math.pow((brightness - pxIntensity), 2);
+				}
+			}
+
+		} else {
+
+		}
+		LOGGER.log(Level.INFO, "Contrast: {0}", contrast);
+		return contrast;
 	}
 
 	/**
