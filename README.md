@@ -9,11 +9,11 @@ Because the default OpenCV formulae of Homebrew does not include the JAVA suppor
 Now edit the formulae ``brew edit opencv`` and change ``-DBUILD_opencv_java=OFF`` into ``-DBUILD_opencv_java=ON``.
 ```
       -DBUILD_opencv_java=ON
+      -DOPENCV_JAVA_TARGET_VERSION=11
       -DBUILD_JAVA=ON
       -DBUILD_opencv_java_bindings_generator=ON
       -DBUILD_FAT_JAVA_LIB=ON
       -DBUILD_SHARED_LIBS=OFF
-      -DCMAKE_JAVA_COMPILE_FLAGS="-source 11 -target 11"
 
 OpenCV can now be installed with ``brew install --build-from-source opencv`` and the JAVA support should be available in
 ```
