@@ -7,6 +7,14 @@ First you will need to make sure that the XCode Command Line Tools are installed
 
 Because the default OpenCV formulae of Homebrew does not include the JAVA support, you need to edit the formula first (and if you already have OpenCV installed, you need to uninstall it ``brew uninstall opencv``)
 Now edit the formulae ``brew edit opencv`` and change ``-DBUILD_opencv_java=OFF`` into ``-DBUILD_opencv_java=ON``.
+```
+      -DBUILD_opencv_java=ON
+      -DOPENCV_JAVA_TARGET_VERSION=11
+      -DBUILD_JAVA=ON
+      -DBUILD_opencv_java_bindings_generator=ON
+      -DBUILD_FAT_JAVA_LIB=ON
+      -DBUILD_SHARED_LIBS=OFF
+
 OpenCV can now be installed with ``brew install --build-from-source opencv`` and the JAVA support should be available in
 ```
 ls -1 /usr/local/Cellar/opencv/3*/share/OpenCV/java/
