@@ -6,20 +6,50 @@ Installation instruction based on ``opencv-java-tutorials <https://github.com/op
 First you will need to make sure that the XCode Command Line Tools are installed by executing ``xcode-select --install`` and Ant is installed as well (e.g. via homebrew) by executing ``brew install ant``.
 
 Because the default OpenCV formulae of Homebrew does not include the JAVA support, you need to edit the formula first (and if you already have OpenCV installed, you need to uninstall it ``brew uninstall opencv``)
-Now edit the formulae ``brew edit opencv`` and change ``-DBUILD_opencv_java=OFF`` into ``-DBUILD_opencv_java=ON``.
+Now edit the formulae ``brew edit opencv`` and change or add the following build properties.
+
 ```
-      -DBUILD_opencv_java=ON
-      -DOPENCV_JAVA_TARGET_VERSION=11
-      -DBUILD_JAVA=ON
-      -DBUILD_opencv_java_bindings_generator=ON
-      -DBUILD_FAT_JAVA_LIB=ON
-      -DBUILD_SHARED_LIBS=OFF
+-DOPENCV_JAVA_SOURCE_VERSION=11
+-DOPENCV_JAVA_TARGET_VERSION=11
+-DBUILD_JAVA=ON
+-DBUILD_FAT_JAVA_LIB=ON
+-DBUILD_SHARED_LIBS=OFF     
+```
+
+In the base image build, we have additionally the following settings to keep dependencies small.
+```
+-DWITH_V4L=OFF
+-DBUILD_PERF_TESTS=OFF
+-DBUILD_TESTS=OFF
+-DBUILD_opencv_core=ON
+-DBUILD_opencv_imgcodecs=ON
+-DBUILD_opencv_imgproc=ON
+-DVIDEOIO_ENABLE_STRICT_PLUGIN_CHECK=OFF
+-DVIDEOIO_ENABLE_PLUGINS=OFF
+-DBUILD_opencv_video=OFF
+-DBUILD_opencv_videoio=OFF \
+-DBUILD_IPP_IW=OFF
+-DBUILD_ITT=OFF
+-DBUILD_PERF_TESTS=OFF
+-DBUILD_TESTS=OFF
+-DBUILD_opencv_calib3d=OFF
+-DBUILD_opencv_dnn=OFF
+-DBUILD_opencv_ml=OFF
+-DBUILD_opencv_highgui=OFF
+-DBUILD_opencv_objdetect=OFF
+-DBUILD_opencv_photo=OFF
+-DBUILD_opencv_python_bindings_generator=OFF
+-DBUILD_opencv_python_tests=OFF
+-DBUILD_opencv_stitching=OFF
+-DBUILD_opencv_ts=OFF
+-DBUILD_opencv_js=OFF
+```
 
 OpenCV can now be installed with ``brew install --build-from-source opencv`` and the JAVA support should be available in
 ```
-ls -1 /usr/local/Cellar/opencv/3*/share/OpenCV/java/
-libopencv_java341.dylib
-opencv-341.jar
+ls -1 /usr/local/Cellar/opencv/*/share/java/opencv4
+libopencv_java450.dylib
+opencv-450.jar
 ```
 
 ## Setup Eclipse external library
